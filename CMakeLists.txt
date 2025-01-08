@@ -69,6 +69,9 @@ nanobind_add_module(
   # Source code goes here
   ${BALATRO_GYM_CORE_DIR}/main_module.cpp
   ${BALATRO_GYM_CORE_DIR}/types.cpp
+  ${BALATRO_GYM_CORE_DIR}/hand.cpp
+  ${BALATRO_GYM_CORE_DIR}/gamestate.cpp
+  ${BALATRO_GYM_CORE_DIR}/score.cpp
 )
 
 set_property(TARGET _core PROPERTY CXX_STANDARD_REQUIRED ON)

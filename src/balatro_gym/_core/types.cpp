@@ -1,8 +1,10 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/stl/array.h>
+#include <sstream>
 
 #include "balatro/src/types.hpp"
+#include "balatro/src/io.hpp"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -15,7 +17,12 @@ void bind_types(nb::module_ &m) {
         .value("Hearts", Balatro::Suit::Hearts)
         .value("Spades", Balatro::Suit::Spades)
         .value("NUMBER_OF_SUITS", Balatro::Suit::NUMBER_OF_SUITS)
-        .value("NO_SUIT", Balatro::Suit::NO_SUIT);
+        .value("NO_SUIT", Balatro::Suit::NO_SUIT)
+        .def("__repr__", [](const Balatro::Suit& suit) {
+            std::stringstream ss;
+            ss << suit;
+            return ss.str();
+        });
 
     // Binding the Rank enum
     nb::enum_<Balatro::Rank>(m, "Rank")
@@ -33,7 +40,12 @@ void bind_types(nb::module_ &m) {
         .value("King", Balatro::Rank::King)
         .value("Ace", Balatro::Rank::Ace)
         .value("NUMBER_OF_RANKS", Balatro::Rank::NUMBER_OF_RANKS)
-        .value("NO_RANK", Balatro::Rank::NO_RANK);
+        .value("NO_RANK", Balatro::Rank::NO_RANK)
+        .def("__repr__", [](const Balatro::Rank& rank) {
+            std::stringstream ss;
+            ss << rank;
+            return ss.str();
+        });
 
     // Binding the Card class
     nb::class_<Balatro::Card>(m, "Card")
@@ -42,5 +54,10 @@ void bind_types(nb::module_ &m) {
         .def(nb::init<int16_t>())  // Constructor with int16_t
         .def("__int__", &Balatro::Card::operator int16_t)  // Conversion to int16_t
         .def_rw("rank", &Balatro::Card::rank)  // Expose rank
-        .def_rw("suit", &Balatro::Card::suit);  // Expose suit
+        .def_rw("suit", &Balatro::Card::suit)  // Expose suit
+        .def("__repr__", [](const Balatro::Card& card) {
+            std::stringstream ss;
+            ss << card;
+            return ss.str();
+        });  // Add string representation for Python
 }
