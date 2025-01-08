@@ -78,6 +78,9 @@ class GameState:
     def discard(self, action: int) -> None:
         pass
 
+    def is_terminal(self) -> bool:
+        pass
+
 if not TYPE_CHECKING:
     from balatro_gym._core import GameState as CppGameState
     GameState = CppGameState

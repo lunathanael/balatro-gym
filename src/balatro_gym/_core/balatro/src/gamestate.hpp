@@ -15,6 +15,7 @@ class GameState {
     GameState(unsigned int seed);
     int play(int action);
     void discard(int action);
+    bool is_terminal() const;
 
     // Data members
     std::vector<Card> deck;

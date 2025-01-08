@@ -1,7 +1,9 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/string.h>
 #include <sstream>
+#include <string>
 
 #include "balatro/src/types.hpp"
 #include "balatro/src/io.hpp"

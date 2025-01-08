@@ -99,4 +99,8 @@ void GameState::discard(int action) {
     --discards;
 }
 
+bool GameState::is_terminal() const {
+    return (hands == 0) || (hand[0] == Cards::No_Card);
+}
+
 }

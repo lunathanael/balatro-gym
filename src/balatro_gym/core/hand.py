@@ -23,6 +23,8 @@ class Hand:
         Set a card at the specified index.
     """
 
+    size: int = 8
+
     @property
     def cards(self) -> array[Card]:
         pass
