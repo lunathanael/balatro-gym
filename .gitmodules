@@ -1,0 +1,3 @@
+[submodule "src/balatro_gym/_core/balatro"]
+	path = src/balatro_gym/_core/balatro
+	url = https://github.com/lunathanael/balatro.git
