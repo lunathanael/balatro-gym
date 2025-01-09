@@ -6,6 +6,6 @@ def card_to_index(card: Card) -> int:
     return int(suit) * 13 + int(rank)
 
 def index_to_card(index: int) -> Card:
-    suit: = Suit(index // 13)
+    suit = Suit(index // 13)
     rank = Rank(index % 13)
     return Card(rank, suit)

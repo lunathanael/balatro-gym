@@ -13,18 +13,22 @@ class BalatroEnv(gym.Env):
     metadata = {"render_modes": ["text", "human"]}
 
     def __init__(self, render_mode: str = "text"):
+
         self.observation_space = spaces.Dict({
-            "hand": spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # 5 cards in hand as one-hot encoding
-            "hands": spaces.Discrete(11, start=0),  # number of hands left as scalar (0-10)
-            "deck": spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # remaining cards in deck as one-hot encoding
-            "discards": spaces.Discrete(11, start=0),  # number of discards left as scalar (0-10)
+            "hand": spaces.Box(low=0, high=1, shape=(4, 13,), dtype=np.bool),  # 5 cards in hand as one-hot encoding
+            "hands": spaces.Discrete(8, start=0),  # number of hands left as scalar (0-10)
+            "deck": spaces.Box(low=0, high=1, shape=(4, 13,), dtype=np.bool),  # remaining cards in deck as one-hot encoding
+            "discards": spaces.Discrete(8, start=0),  # number of discards left as scalar (0-10)
         })
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
         self.deck: Optional[np.ndarray] = None
         # Actions: card selection (0-4) and play type
-        self.action_space = spaces.Box(low=0, high=1, shape=(53,), dtype=np.bool)  # One-hot encoded action space
+        self.action_space = spaces.Tuple((
+            spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # One-hot encoded card selection
+            spaces.Discrete(2)  # Boolean flag for discard vs play
+        ))
         
         self.render_mode = render_mode
         if self.render_mode not in self.metadata["render_modes"]:
@@ -59,11 +63,11 @@ class BalatroEnv(gym.Env):
             terminated = True
             return self._get_obs(), -10, terminated, truncated, self._get_info()
 
-        hand_indices = np.where(hand == 1)[0]
-        action_indices = np.where(action_mask == 1)[0]
-
-        play_mask = [1 if x in action_indices else 0 for x in hand_indices]
-        action_int = sum(bit << i for i, bit in enumerate(reversed(play_mask)))
+        action_int = 0
+        for i in range(8):
+            card = self.game_state.hand[i]
+            if action_mask[utils.card_to_index(card)]:
+                action_int += 1 << i
 
         reward = 0
         if is_discard:
