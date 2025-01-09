@@ -10,9 +10,9 @@ class BalatroEnv(gym.Env):
     
     A Gymnasium environment for playing Balatro, implementing the standard interface.
     """
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+    metadata = {"render_modes": ["text", "human"]}
 
-    def __init__(self, render_mode: Optional[str] = None):
+    def __init__(self, render_mode: str = "text"):
         self.observation_space = spaces.Dict({
             "hand": spaces.Box(low=0, high=1, shape=(52,), dtype=np.int32),  # 5 cards in hand as one-hot encoding
             "hands": spaces.Discrete(11, start=0),  # number of hands left as scalar (0-10)
@@ -26,7 +26,10 @@ class BalatroEnv(gym.Env):
         # Actions: card selection (0-4) and play type
         self.action_space = spaces.Box(low=0, high=1, shape=(53,), dtype=np.int32)  # One-hot encoded action space
         
-        
+        self.render_mode = render_mode
+        if self.render_mode not in self.metadata["render_modes"]:
+            raise ValueError(f"Invalid render mode: {self.render_mode}")
+
         self.reset()
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[Dict] = None) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -46,19 +49,29 @@ class BalatroEnv(gym.Env):
         # Execute action (play card)
         truncated = False  # Episode truncated due to time limit
 
-        
-        action_indices = np.where(action[:52] == 1)[0]
-        hand_indices = np.where(self.hand == 1)[0]
-        valid_plays = np.intersect1d(action_indices, hand_indices)
+        action_mask = action[:52]
 
-        action_int = 0
+        # check invalid action
+        if np.sum(action_mask) > 5 or np.sum(action_mask) < 1:
+            terminated = True
+            return self._get_obs(), -10, terminated, truncated, self._get_info()
+        if np.any(np.logical_and(action_mask, np.logical_not(self.hand))):
+            terminated = True
+            return self._get_obs(), -10, terminated, truncated, self._get_info()
+
+        hand_indices = np.where(self.hand == 1)[0]
+        action_indices = np.where(action_mask == 1)[0]
+
+        play_mask = [1 if x in action_indices else 0 for x in hand_indices]
+        action_int = sum(bit << i for i, bit in enumerate(reversed(play_mask)))
         
         action_type = action[52]
 
+        reward = 0
         if action_type == 1:
-            reward = self.game_state.discard(action_int)
+            self.game_state.discard(action_int)
         else:
-            reward = self.game_state.play(action_int)
+            reward += self.game_state.play(action_int)
 
         terminated = self.game_state.is_terminal()
         
@@ -89,13 +102,20 @@ class BalatroEnv(gym.Env):
         """Get additional information about the current state."""
         return {
             "score" : self.game_state.score,
+            "state" : self.game_state,
         }
 
     def render(self):
         """Render the current state."""
-        if self.render_mode == "human":
+        if self.render_mode == "text":
+            print("Hand: ", self.game_state.hand)
+            print("Deck: ", self.game_state.deck)
+            print("Hands: ", self.game_state.hands)
+            print("Discards: ", self.game_state.discards)
+            print("Score: ", self.game_state.score)
+            print("Is terminal: ", self.game_state.is_terminal())
+            print("--------------------------------")
+
+        elif self.render_mode == "human":
             # TODO: Implement human rendering
-            pass
-        elif self.render_mode == "rgb_array":
-            # TODO: Implement rgb_array rendering
             pass 

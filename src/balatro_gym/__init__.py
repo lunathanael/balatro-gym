@@ -1,6 +1,6 @@
-from . import core, environment
+from . import core, environments
 
 __all__ = [
     "core",
-    "environment",
+    "environments",
 ]

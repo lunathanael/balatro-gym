@@ -1,5 +1,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/make_iterator.h>
 #include <sstream>
 
