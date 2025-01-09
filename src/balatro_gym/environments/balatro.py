@@ -14,9 +14,9 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
         self.observation_space = spaces.Dict({
-            "hand": spaces.Box(low=0, high=1, shape=(52,), dtype=np.int32),  # 5 cards in hand as one-hot encoding
+            "hand": spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # 5 cards in hand as one-hot encoding
             "hands": spaces.Discrete(11, start=0),  # number of hands left as scalar (0-10)
-            "deck": spaces.Box(low=0, high=1, shape=(52,), dtype=np.int32),  # remaining cards in deck as one-hot encoding
+            "deck": spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # remaining cards in deck as one-hot encoding
             "discards": spaces.Discrete(11, start=0),  # number of discards left as scalar (0-10)
         })
 
@@ -24,7 +24,7 @@ class BalatroEnv(gym.Env):
         self.hand: Optional[np.ndarray] = None
         self.deck: Optional[np.ndarray] = None
         # Actions: card selection (0-4) and play type
-        self.action_space = spaces.Box(low=0, high=1, shape=(53,), dtype=np.int32)  # One-hot encoded action space
+        self.action_space = spaces.Box(low=0, high=1, shape=(53,), dtype=np.bool)  # One-hot encoded action space
         
         self.render_mode = render_mode
         if self.render_mode not in self.metadata["render_modes"]:
@@ -82,8 +82,8 @@ class BalatroEnv(gym.Env):
 
     def _get_obs(self) -> Dict[str, Any]:
         """Get the current observation."""
-        self.hand = np.zeros(52, dtype=np.int32)
-        self.deck = np.zeros(52, dtype=np.int32)
+        self.hand = np.zeros(52, dtype=np.bool)
+        self.deck = np.zeros(52, dtype=np.bool)
 
         for card in self.game_state.hand:
             self.hand[int(card)] = 1
