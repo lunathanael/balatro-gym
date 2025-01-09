@@ -4,9 +4,13 @@ import numpy as np
 import random
 env = gym.make("Balatro-v0", render_mode="text")
 
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+
 
 def runner():
-    obs, info = env.reset()
+    obs, info = env.reset(seed=SEED)
     deck = obs["deck"]
     hand = obs["hand"]
 
@@ -36,6 +40,7 @@ def runner():
     obs, reward, terminated, truncated, info = env.step(action)
     if reward == -10 or terminated:
         assert False
+    print(reward)
     
     assert reward == pred_score
 
