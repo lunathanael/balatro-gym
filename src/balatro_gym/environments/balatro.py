@@ -46,8 +46,7 @@ class BalatroEnv(gym.Env):
         return observation, info
 
     def step(self, action: np.ndarray) -> Tuple[Dict[str, Any], float, bool, bool, Dict[str, Any]]:
-        # Execute action (play card)
-        truncated = False  # Episode truncated due to time limit
+        truncated = False
 
         action_mask = action[:52]
 
