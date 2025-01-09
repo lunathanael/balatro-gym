@@ -99,16 +99,86 @@ class Card:
 
     def __int__(self) -> int:
         pass
+    
+class Cards:
+    """
+    A Python interface for predefined card constants.
+
+    Contains all 52 standard playing cards as constants, named in the format
+    {rank}Of{suit}, e.g. AceOfSpades, TwoOfHearts, etc.
+
+    Also contains No_Card as a sentinel value.
+    """
+    AceOfClubs: Card
+    TwoOfClubs: Card  
+    ThreeOfClubs: Card
+    FourOfClubs: Card
+    FiveOfClubs: Card
+    SixOfClubs: Card
+    SevenOfClubs: Card
+    EightOfClubs: Card
+    NineOfClubs: Card
+    TenOfClubs: Card
+    JackOfClubs: Card
+    QueenOfClubs: Card
+    KingOfClubs: Card
+
+    AceOfDiamonds: Card
+    TwoOfDiamonds: Card
+    ThreeOfDiamonds: Card
+    FourOfDiamonds: Card
+    FiveOfDiamonds: Card
+    SixOfDiamonds: Card
+    SevenOfDiamonds: Card
+    EightOfDiamonds: Card
+    NineOfDiamonds: Card
+    TenOfDiamonds: Card
+    JackOfDiamonds: Card
+    QueenOfDiamonds: Card
+    KingOfDiamonds: Card
+
+    AceOfHearts: Card
+    TwoOfHearts: Card
+    ThreeOfHearts: Card
+    FourOfHearts: Card
+    FiveOfHearts: Card
+    SixOfHearts: Card
+    SevenOfHearts: Card
+    EightOfHearts: Card
+    NineOfHearts: Card
+    TenOfHearts: Card
+    JackOfHearts: Card
+    QueenOfHearts: Card
+    KingOfHearts: Card
+
+    AceOfSpades: Card
+    TwoOfSpades: Card
+    ThreeOfSpades: Card
+    FourOfSpades: Card
+    FiveOfSpades: Card
+    SixOfSpades: Card
+    SevenOfSpades: Card
+    EightOfSpades: Card
+    NineOfSpades: Card
+    TenOfSpades: Card
+    JackOfSpades: Card
+    QueenOfSpades: Card
+    KingOfSpades: Card
+
+    No_Card: Card
+
 
 if not TYPE_CHECKING:
-    from balatro_gym._core import Suit as CppSuit, Rank as CppRank, Card as CppCard
+    from balatro_gym._core import Suit as CppSuit, Rank as CppRank, Card as CppCard, Cards as CppCards
 
     Suit = CppSuit
     Rank = CppRank
     Card = CppCard
+    Cards = CppCards
 
 __all__ = [
     "Suit",
     "Rank",
     "Card",
+    "Cards",
 ]
