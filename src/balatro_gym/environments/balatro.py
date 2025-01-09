@@ -56,6 +56,9 @@ class BalatroEnv(gym.Env):
         hand = self.hand.flatten()
 
         # check invalid action
+        if is_discard and self.game_state.discards == 0:
+            terminated = True
+            return self._get_obs(), -10, terminated, truncated, self._get_info()
         if np.sum(action_mask) > 5 or np.sum(action_mask) < 1:
             terminated = True
             return self._get_obs(), -10, terminated, truncated, self._get_info()
