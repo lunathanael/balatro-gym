@@ -4,7 +4,7 @@ import gymnasium as gym
 from gymnasium import spaces
 
 from balatro_gym.core import GameState
-
+from balatro_gym.environments import utils
 class BalatroEnv(gym.Env):
     """Balatro Playing Environment
     
@@ -45,29 +45,28 @@ class BalatroEnv(gym.Env):
         
         return observation, info
 
-    def step(self, action: np.ndarray) -> Tuple[Dict[str, Any], float, bool, bool, Dict[str, Any]]:
+    def step(self, action: tuple[np.ndarray, bool]) -> Tuple[Dict[str, Any], float, bool, bool, Dict[str, Any]]:
         truncated = False
+        action_mask, is_discard = action
 
-        action_mask = action[:52]
+        hand = self.hand.flatten()
 
         # check invalid action
         if np.sum(action_mask) > 5 or np.sum(action_mask) < 1:
             terminated = True
             return self._get_obs(), -10, terminated, truncated, self._get_info()
-        if np.any(np.logical_and(action_mask, np.logical_not(self.hand))):
+        if np.any(np.logical_and(action_mask, np.logical_not(hand))):
             terminated = True
             return self._get_obs(), -10, terminated, truncated, self._get_info()
 
-        hand_indices = np.where(self.hand == 1)[0]
+        hand_indices = np.where(hand == 1)[0]
         action_indices = np.where(action_mask == 1)[0]
 
         play_mask = [1 if x in action_indices else 0 for x in hand_indices]
         action_int = sum(bit << i for i, bit in enumerate(reversed(play_mask)))
-        
-        action_type = action[52]
 
         reward = 0
-        if action_type == 1:
+        if is_discard:
             self.game_state.discard(action_int)
         else:
             reward += self.game_state.play(action_int)
@@ -81,14 +80,14 @@ class BalatroEnv(gym.Env):
 
     def _get_obs(self) -> Dict[str, Any]:
         """Get the current observation."""
-        self.hand = np.zeros(52, dtype=np.bool)
-        self.deck = np.zeros(52, dtype=np.bool)
+        self.hand = np.zeros((4, 13), dtype=np.bool)
+        self.deck = np.zeros((4, 13), dtype=np.bool)
 
         for card in self.game_state.hand:
-            self.hand[int(card)] = 1
+            self.hand[int(card.suit)][int(card.rank)] = 1
 
         for card in self.game_state.deck:
-            self.deck[int(card)] = 1
+            self.deck[int(card.suit)][int(card.rank)] = 1
 
         return {
             "hand" : self.hand,
