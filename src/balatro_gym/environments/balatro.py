@@ -147,7 +147,7 @@ class BalatroEnv(gym.Env):
             "state" : self.game_state,
         }
 
-        if self.game_state.is_terminal():
+        if self.game_state.is_terminal() or self.length > 30:
             info["final_info"] = {
                 "r" : self.score,
                 "raw_r" : self.game_state.score,
