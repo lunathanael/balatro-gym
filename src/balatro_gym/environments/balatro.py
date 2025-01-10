@@ -3,7 +3,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
-from balatro_gym.core import GameState
+from balatro_gym.core import GameState, Cards
 from balatro_gym.environments import utils
 class BalatroEnv(gym.Env):
     """Balatro Playing Environment
@@ -14,21 +14,13 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
 
-        self.observation_space = spaces.Dict({
-            "hand": spaces.Box(low=0, high=1, shape=(4, 13,), dtype=np.bool),  # 5 cards in hand as one-hot encoding
-            "hands": spaces.Discrete(8, start=0),  # number of hands left as scalar (0-10)
-            "deck": spaces.Box(low=0, high=1, shape=(4, 13,), dtype=np.bool),  # remaining cards in deck as one-hot encoding
-            "discards": spaces.Discrete(8, start=0),  # number of discards left as scalar (0-10)
-        })
+        self.observation_space = spaces.Box(low=0, high=1, shape=(52 + 52 + 6,), dtype=np.int8)
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
         self.deck: Optional[np.ndarray] = None
         # Actions: card selection (0-4) and play type
-        self.action_space = spaces.Tuple((
-            spaces.Box(low=0, high=1, shape=(52,), dtype=np.bool),  # One-hot encoded card selection
-            spaces.Discrete(2)  # Boolean flag for discard vs play
-        ))
+        self.action_space = spaces.Discrete(53)
         
         self.render_mode = render_mode
         if self.render_mode not in self.metadata["render_modes"]:
@@ -38,77 +30,126 @@ class BalatroEnv(gym.Env):
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[Dict] = None) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         super().reset(seed=seed)
+        self.length = 0
+
+        self.selected = np.zeros(52, dtype=np.int8)
+        self.selected_count = 0
+        self.score = 0
+        self.last_rank = None
         
-        if seed is not None:
-            self.game_state = GameState(seed)
-        else:
-            self.game_state = GameState()
+        # if seed is not None:
+        #     self.game_state = GameState(seed=seed)
+        # else:
+        #     self.game_state = GameState()
         
+        self.game_state = GameState(42069)
+        # self.game_state.hands = 4
         observation = self._get_obs()
         info = self._get_info()
         
         return observation, info
 
-    def step(self, action: tuple[np.ndarray, bool]) -> Tuple[Dict[str, Any], float, bool, bool, Dict[str, Any]]:
+    def step(self, action: int) -> Tuple[Dict[str, Any], float, bool, bool, Dict[str, Any]]:
         truncated = False
-        action_mask, is_discard = action
-
-        hand = self.hand.flatten()
-
-        # check invalid action
-        if is_discard and self.game_state.discards == 0:
-            terminated = True
-            return self._get_obs(), -10, terminated, truncated, self._get_info()
-        if np.sum(action_mask) > 5 or np.sum(action_mask) < 1:
-            terminated = True
-            return self._get_obs(), -10, terminated, truncated, self._get_info()
-        if np.any(np.logical_and(action_mask, np.logical_not(hand))):
-            terminated = True
-            return self._get_obs(), -10, terminated, truncated, self._get_info()
-
-        action_int = 0
-        for i in range(8):
-            card = self.game_state.hand[i]
-            if action_mask[utils.card_to_index(card)]:
-                action_int += 1 << i
-
-        reward = 0
-        if is_discard:
-            self.game_state.discard(action_int)
-        else:
-            reward += self.game_state.play(action_int)
-
         terminated = self.game_state.is_terminal()
-        
+
+        self.length += 1
+        if self.length > 30:
+            truncated = True
+
+        if action == 52:
+            if self.selected_count == 0:
+                return self._get_obs(), 0, terminated, truncated, self._get_info()
+            
+            action_int = 0
+            actual_hand = self.game_state.hand
+            cards_selected = []
+            for i in range(8):
+                if self.selected[utils.card_to_index(actual_hand[i])]:
+                    cards_selected.append(actual_hand[i])
+                    action_int += 1 << i
+
+
+            reward = self.game_state.play(action_int)
+            print(f"Play {cards_selected} for {reward} points")
+
+            self.selected = np.zeros(52, dtype=np.int8)
+            self.selected_count = 0
+            self.last_rank = None
+            
+            terminated = self.game_state.is_terminal()
+            reward += 0.1
+            self.score += reward
+
+            return self._get_obs(), reward, terminated, truncated, self._get_info()
+
+        if self.selected_count == 5:
+            return self._get_obs(), 0, terminated, truncated, self._get_info()
+
+        if not self.hand[action] or self.selected[action]:
+            # print("Invalid action mask: card not in hand")
+            return self._get_obs(), 0, terminated, truncated, self._get_info()
+
+        card = utils.index_to_card(action)
+        rank = int(card.rank)
+        if self.last_rank is not None and rank < self.last_rank:
+            return self._get_obs(), 0, terminated, truncated, self._get_info()
+        self.last_rank = rank
+
+        self.selected[action] = 1
+        self.selected_count += 1
+
         observation = self._get_obs()
         info = self._get_info()
-        
-        return observation, reward, terminated, truncated, info
+        self.score += 0.1
+        return observation, 0.1, terminated, truncated, info
 
     def _get_obs(self) -> Dict[str, Any]:
         """Get the current observation."""
-        self.hand = np.zeros((4, 13), dtype=np.bool)
-        self.deck = np.zeros((4, 13), dtype=np.bool)
+        self.hand = np.zeros((52,), dtype=np.int8)
+        self.deck = np.zeros((52,), dtype=np.int8)
 
         for card in self.game_state.hand:
-            self.hand[int(card.suit)][int(card.rank)] = 1
+            self.hand[utils.card_to_index(card)] = 1
+
+        selected_count = np.zeros((6,), dtype=np.int8)
+        selected_count[self.selected_count] = 1
+
+        hand_obs = self.hand
+        hand_obs[self.selected] = 0
+        obs = np.concatenate([hand_obs, self.selected, selected_count])
+
+        return obs
 
         for card in self.game_state.deck:
             self.deck[int(card.suit)][int(card.rank)] = 1
 
-        return {
-            "hand" : self.hand,
-            "hands" : self.game_state.hands,
-            "deck" : self.deck,
-            "discards" : self.game_state.discards,
-        }
+        self.hand = self.hand.flatten()
+        self.deck = self.deck.flatten()
+
+        hands = np.zeros(8, dtype=np.int8)
+
+        hands[self.game_state.hands] = 1
+
+        obs = np.concatenate([self.hand, self.deck, hands])
+
+        return obs
 
     def _get_info(self) -> Dict[str, Any]:
         """Get additional information about the current state."""
-        return {
-            "score" : self.game_state.score,
+        info = {
+            "score" : self.score,
             "state" : self.game_state,
         }
+
+        if self.game_state.is_terminal():
+            info["final_info"] = {
+                "r" : self.score,
+                "raw_r" : self.game_state.score,
+                "l" : self.length,
+            }
+
+        return info
 
     def render(self):
         """Render the current state."""
