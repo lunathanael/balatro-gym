@@ -71,7 +71,7 @@ class BalatroEnv(gym.Env):
 
 
             reward = self.game_state.play(action_int)
-            print(f"Play {cards_selected} for {reward} points")
+            # print(f"Play {cards_selected} for {reward} points")
 
             self.selected = np.zeros(52, dtype=np.int8)
             self.selected_count = 0
