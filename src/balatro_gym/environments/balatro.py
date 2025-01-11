@@ -14,7 +14,7 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
 
-        self.observation_space = spaces.Box(low=0, high=1, shape=(52 + 52 + 13 + 4 + 6,), dtype=np.int8)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(52 + 52 + 13 + 13 + 4 + 4 + 6,), dtype=np.int8)
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
@@ -109,34 +109,28 @@ class BalatroEnv(gym.Env):
         self.hand = np.zeros((52,), dtype=np.int8)
         self.deck = np.zeros((52,), dtype=np.int8)
 
-        self.ranks = np.zeros((13,), dtype=np.int8)
-        self.suits = np.zeros((4,), dtype=np.int8)
+        self.hand_ranks = np.zeros((13,), dtype=np.int8)
+        self.hand_suits = np.zeros((4,), dtype=np.int8)
+        self.deck_ranks = np.zeros((13,), dtype=np.int8)
+        self.deck_suits = np.zeros((4,), dtype=np.int8)
 
         for card in self.game_state.hand:
             self.hand[utils.card_to_index(card)] = 1
-            self.ranks[int(card.rank)] += 1
-            self.suits[int(card.suit)] += 1
+            self.hand_ranks[int(card.rank)] += 1
+            self.hand_suits[int(card.suit)] += 1
+
+        for card in self.game_state.deck:
+            self.deck[utils.card_to_index(card)] = 1
+            self.deck_ranks[int(card.rank)] += 1
+            self.deck_suits[int(card.suit)] += 1
 
         selected_count = np.zeros((6,), dtype=np.int8)
         selected_count[self.selected_count] = 1
 
-        hand_obs = self.hand
-        hand_obs[self.selected] = 0
-        obs = np.concatenate([hand_obs, self.selected, self.ranks, self.suits, selected_count])
-
-        return obs
-
-        for card in self.game_state.deck:
-            self.deck[int(card.suit)][int(card.rank)] = 1
-
-        self.hand = self.hand.flatten()
-        self.deck = self.deck.flatten()
-
-        hands = np.zeros(8, dtype=np.int8)
-
-        hands[self.game_state.hands] = 1
-
-        obs = np.concatenate([self.hand, self.deck, hands])
+        # hand_obs = self.hand
+        # hand_obs[self.selected] = 0
+    
+        obs = np.concatenate([self.hand, self.selected, self.hand_ranks, self.deck_ranks, self.hand_suits, self.deck_suits, selected_count])
 
         return obs
 
