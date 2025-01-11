@@ -14,13 +14,13 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
 
-        self.observation_space = spaces.Box(low=0, high=4, shape=(13 + 4 + 6,), dtype=np.int8)
+        self.observation_space = spaces.Box(low=0, high=4, shape=(13 + 4 + 1 + 2,), dtype=np.int8)
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
         self.deck: Optional[np.ndarray] = None
         # Actions: card selection (0-4) and play type
-        self.action_space = spaces.Discrete(53)
+        self.action_space = spaces.Discrete(54)
         
         self.render_mode = render_mode
         if self.render_mode not in self.metadata["render_modes"]:
@@ -57,8 +57,11 @@ class BalatroEnv(gym.Env):
         if self.length > 30:
             truncated = True
 
-        if action == 52:
+        if action == 52 or action == 53:
             if self.selected_count == 0:
+                return self._get_obs(), 0, terminated, truncated, self._get_info()
+            
+            if action == 53 and self.game_state.discards == 0:
                 return self._get_obs(), 0, terminated, truncated, self._get_info()
             
             action_int = 0
@@ -69,8 +72,11 @@ class BalatroEnv(gym.Env):
                     cards_selected.append(actual_hand[i])
                     action_int += 1 << i
 
-
-            reward = self.game_state.play(action_int)
+            if action == 52:
+                reward = self.game_state.play(action_int)
+            else:
+                self.game_state.discard(action_int)
+                reward = 0
             # print(f"Play {cards_selected} for {reward} points")
 
             self.selected = np.zeros(52, dtype=np.int8)
@@ -129,8 +135,12 @@ class BalatroEnv(gym.Env):
 
         hand_obs = self.hand
         hand_obs[self.selected] = 0
-    
-        obs = np.concatenate([self.hand, self.selected, self.hand_ranks, self.hand_suits, selected_count])
+
+        hand_discard_count = np.zeros((2,), dtype=np.int8)
+        hand_discard_count[0] = self.game_state.hands
+        hand_discard_count[1] = self.game_state.discards
+
+        obs = np.concatenate([self.hand, self.selected, self.hand_ranks, self.hand_suits, selected_count, hand_discard_count])
 
         return obs
 
