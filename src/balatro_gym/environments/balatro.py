@@ -131,7 +131,7 @@ class BalatroEnv(gym.Env):
             self.deck_suits[int(card.suit)] += 1
 
         selected_count = np.zeros((1,), dtype=np.int8)
-        selected_count = self.selected_count
+        selected_count[0] = self.selected_count
 
         hand_obs = self.hand
         hand_obs[self.selected] = 0
