@@ -14,7 +14,7 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
 
-        self.observation_space = spaces.Box(low=0, high=1, shape=(52 + 52 + 13 + 13 + 4 + 4 + 6,), dtype=np.int8)
+        self.observation_space = spaces.Box(low=0, high=4, shape=(52 + 52 + 13 + 13 + 4 + 4 + 6,), dtype=np.int8)
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
