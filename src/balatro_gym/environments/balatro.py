@@ -14,7 +14,7 @@ class BalatroEnv(gym.Env):
 
     def __init__(self, render_mode: str = "text"):
 
-        self.observation_space = spaces.Box(low=0, high=4, shape=(52 + 52 + 13 + 13 + 4 + 4 + 6,), dtype=np.int8)
+        self.observation_space = spaces.Box(low=0, high=4, shape=(13 + 4 + 6,), dtype=np.int8)
 
         self.game_state: Optional[GameState] = None
         self.hand: Optional[np.ndarray] = None
@@ -124,13 +124,13 @@ class BalatroEnv(gym.Env):
             self.deck_ranks[int(card.rank)] += 1
             self.deck_suits[int(card.suit)] += 1
 
-        selected_count = np.zeros((6,), dtype=np.int8)
-        selected_count[self.selected_count] = 1
+        selected_count = np.zeros((1,), dtype=np.int8)
+        selected_count = self.selected_count
 
-        # hand_obs = self.hand
-        # hand_obs[self.selected] = 0
+        hand_obs = self.hand
+        hand_obs[self.selected] = 0
     
-        obs = np.concatenate([self.hand, self.selected, self.hand_ranks, self.deck_ranks, self.hand_suits, self.deck_suits, selected_count])
+        obs = np.concatenate([self.hand, self.selected, self.hand_ranks, self.hand_suits, selected_count])
 
         return obs
 
