@@ -35,7 +35,6 @@ class BalatroEnv(gym.Env):
         self.selected = np.zeros(52, dtype=np.int8)
         self.selected_count = 0
         self.score = 0
-        self.last_rank = None
         
         # if seed is not None:
         #     self.game_state = GameState(seed=seed)
@@ -81,7 +80,6 @@ class BalatroEnv(gym.Env):
 
             self.selected = np.zeros(52, dtype=np.int8)
             self.selected_count = 0
-            self.last_rank = None
             
             terminated = self.game_state.is_terminal()
             reward += 0.1
@@ -95,12 +93,6 @@ class BalatroEnv(gym.Env):
         if not self.hand[action] or self.selected[action]:
             # print("Invalid action mask: card not in hand")
             return self._get_obs(), 0, terminated, truncated, self._get_info()
-
-        card = utils.index_to_card(action)
-        rank = int(card.rank)
-        if self.last_rank is not None and rank < self.last_rank:
-            return self._get_obs(), 0, terminated, truncated, self._get_info()
-        self.last_rank = rank
 
         self.selected[action] = 1
         self.selected_count += 1
