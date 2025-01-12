@@ -12,7 +12,7 @@ class BalatroEnv(gym.Env):
     """
     metadata = {"render_modes": ["text", "human"]}
 
-    def __init__(self, render_mode: str = "text"):
+    def __init__(self, render_mode: str = "text", truncate_length: int = 100):
 
         self.observation_space = spaces.Box(low=0, high=13, shape=(52 + 52 + 13 + 4 + 1 + 2,), dtype=np.int8)
 
@@ -21,6 +21,8 @@ class BalatroEnv(gym.Env):
         self.deck: Optional[np.ndarray] = None
         # Actions: card selection (0-4) and play type
         self.action_space = spaces.Discrete(54)
+
+        self.truncate_length = truncate_length
         
         self.render_mode = render_mode
         if self.render_mode not in self.metadata["render_modes"]:
@@ -51,15 +53,17 @@ class BalatroEnv(gym.Env):
         terminated = self.game_state.is_terminal()
 
         self.length += 1
-        if self.length > 30:
+        if self.length >= self.truncate_length:
             truncated = True
 
         if action == 52 or action == 53:
             if self.selected_count == 0:
-                return self._get_obs(), 0, terminated, truncated, self._get_info()
+                self.score -= 0.1
+                return self._get_obs(), -0.1, terminated, truncated, self._get_info()
             
             if action == 53 and self.game_state.discards == 0:
-                return self._get_obs(), 0, terminated, truncated, self._get_info()
+                self.score -= 0.1
+                return self._get_obs(), -0.1, terminated, truncated, self._get_info()
             
             action_int = 0
             actual_hand = self.game_state.hand
@@ -71,6 +75,7 @@ class BalatroEnv(gym.Env):
 
             if action == 52:
                 reward = self.game_state.play(action_int)
+                reward -= 10
             else:
                 self.game_state.discard(action_int)
                 reward = 0
@@ -80,25 +85,24 @@ class BalatroEnv(gym.Env):
             self.selected_count = 0
             
             terminated = self.game_state.is_terminal()
-            reward += 0.1
             self.score += reward
 
             return self._get_obs(), reward, terminated, truncated, self._get_info()
 
         if self.selected_count == 5:
-            return self._get_obs(), 0, terminated, truncated, self._get_info()
+            self.score -= 0.1
+            return self._get_obs(), -0.1, terminated, truncated, self._get_info()
 
         if not self.hand[action] or self.selected[action]:
-            # print("Invalid action mask: card not in hand")
-            return self._get_obs(), 0, terminated, truncated, self._get_info()
+            self.score -= 0.1
+            return self._get_obs(), -0.1, terminated, truncated, self._get_info()
 
         self.selected[action] = 1
         self.selected_count += 1
 
         observation = self._get_obs()
         info = self._get_info()
-        self.score += 0.1
-        return observation, 0.1, terminated, truncated, info
+        return observation, 0, terminated, truncated, info
 
     def _get_obs(self) -> Dict[str, Any]:
         """Get the current observation."""
