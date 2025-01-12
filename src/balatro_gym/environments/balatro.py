@@ -39,7 +39,7 @@ class BalatroEnv(gym.Env):
         self.score = 0
         
         if seed is not None:
-            self.game_state = GameState(seed=seed)
+            self.game_state = GameState(seed)
         else:
             self.game_state = GameState()
 
