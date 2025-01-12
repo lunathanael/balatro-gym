@@ -36,13 +36,11 @@ class BalatroEnv(gym.Env):
         self.selected_count = 0
         self.score = 0
         
-        # if seed is not None:
-        #     self.game_state = GameState(seed=seed)
-        # else:
-        #     self.game_state = GameState()
-        
-        self.game_state = GameState(42069)
-        # self.game_state.hands = 4
+        if seed is not None:
+            self.game_state = GameState(seed=seed)
+        else:
+            self.game_state = GameState()
+
         observation = self._get_obs()
         info = self._get_info()
         
