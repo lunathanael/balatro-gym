@@ -81,6 +81,9 @@ class GameState:
     def is_terminal(self) -> bool:
         pass
 
+    def __copy__(self) -> GameState:
+        pass
+
 if not TYPE_CHECKING:
     from balatro_gym._core import GameState as CppGameState
     GameState = CppGameState
