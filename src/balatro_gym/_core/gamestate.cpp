@@ -17,5 +17,6 @@ void bind_gamestate(nb::module_ &m) {
         .def_rw("score", &Balatro::GameState::score)  // Expose score
         .def_rw("hands", &Balatro::GameState::hands)  // Expose hands count
         .def_rw("discards", &Balatro::GameState::discards)  // Expose discards count
-        .def("is_terminal", &Balatro::GameState::is_terminal);  // Expose terminal state
+        .def("is_terminal", &Balatro::GameState::is_terminal)  // Expose terminal state
+        .def("__copy__", [](const Balatro::GameState &self) { return Balatro::GameState(self); });  // Expose copy method
 } 
